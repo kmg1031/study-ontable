@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomePage from '@/views/HomePage.vue';
 import ItemPage from '@/views/ItemPage.vue';
+import CartPage from '@/views/CartPage.vue';
 
 const routes = [
     {
@@ -21,6 +22,11 @@ const routes = [
             storeIdx: route.query.storeIdx,
             itemIdx: route.params.itemIdx,
         }),
+    },
+    {
+        path: '/orderer/cart',
+        name: 'CartPage',
+        component: CartPage,
     },
 ];
 

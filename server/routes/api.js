@@ -50,11 +50,13 @@ router.get('/menus/:itemIdx', (req, res) => {
 
 // 주문하기
 router.post('/order/store', (req, res) => {
-const { storeIdx, tableIdx, menuList } = req.body;
+    const { storeIdx, tableIdx, menuList } = req.body;
 
-// TODO: 주문 처리 로직 추가
+    // TODO: 주문 처리 로직 추가
+    console.log('주문 데이터:', { storeIdx, tableIdx, menuList });
 
-res.json({ success: true, message: '주문이 완료되었습니다.' });
+    // 주문이 성공적으로 처리되었다고 가정
+    res.json({ success: true, message: '주문이 완료되었습니다.' });
 });
 
 module.exports = router;
