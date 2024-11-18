@@ -7,12 +7,17 @@ export default createStore({
   },
   mutations: {
     ADD_TO_CART(state, menuItem) {
-      // 동일한 메뉴가 이미 장바구니에 있는지 확인
-      const item = state.cart.find(item => item.menuIdx === menuItem.menuIdx);
+      // 메뉴 아이템과 옵션을 고유하게 식별하기 위해 키 생성
+      const itemKey = `${menuItem.menuIdx}_${JSON.stringify(menuItem.options)}`;
+      const item = state.cart.find(item => item.key === itemKey);
       if (item) {
-        item.quantity += 1; // 수량 증가
+        item.quantity += menuItem.quantity; // 선택한 수량만큼 증가
       } else {
-        state.cart.push({ ...menuItem, quantity: 1 });
+        state.cart.push({
+          ...menuItem,
+          key: itemKey,
+          optionsData: menuItem.optionsData,
+        });
       }
     },
     REMOVE_FROM_CART(state, menuIdx) {
@@ -20,6 +25,12 @@ export default createStore({
     },
     CLEAR_CART(state) {
       state.cart = [];
+    },
+    UPDATE_CART_ITEM_QUANTITY(state, { key, quantity }) {
+      const item = state.cart.find(item => item.key === key);
+      if (item) {
+        item.quantity = quantity;
+      }
     },
   },
   actions: {
@@ -32,13 +43,35 @@ export default createStore({
     clearCart({ commit }) {
       commit('CLEAR_CART');
     },
+    updateCartItemQuantity({ commit }, payload) {
+      commit('UPDATE_CART_ITEM_QUANTITY', payload);
+    },
   },
   getters: {
     cartItems(state) {
       return state.cart;
     },
     cartTotalPrice(state) {
-      return state.cart.reduce((total, item) => total + item.price * item.quantity, 0);
+      return state.cart.reduce((total, item) => total + calculateItemTotalPrice(item), 0);
     },
   },
 });
+
+function calculateItemTotalPrice(item) {
+  let totalPrice = item.price || 0;
+
+  // 옵션 가격 합산
+  if (item.options && item.optionsData) {
+    for (const [groupName, value] of Object.entries(item.options)) {
+      const optionGroup = item.optionsData.find(group => group.name === groupName);
+      if (optionGroup) {
+        const optionItem = optionGroup.items.find(opt => opt.value === value);
+        if (optionItem) {
+          totalPrice += optionItem.price || 0;
+        }
+      }
+    }
+  }
+
+  return totalPrice * item.quantity;
+}

@@ -37,14 +37,25 @@
                 </div>
             </section>
         </div>
+        <!-- 옵션 모달 컴포넌트 추가 -->
+        <OptionModal
+        :visible="isModalVisible"
+        :menu="selectedMenu"
+        @confirm="addToCartWithOptions"
+        @close="closeModal"
+        />
     </div>
 </template>
 
 <script>
+import OptionModal from '@/components/OptionModal.vue';
 import { mapActions } from 'vuex';
 
 export default {
     name: 'MenuListComponent',
+    components: {
+        OptionModal,
+    },
     props: {
         storeIdx: Number,
     },
@@ -52,6 +63,8 @@ export default {
         return {
             categories: ['커피', '차', '디저트'],
             menus: [],
+            isModalVisible: false,
+            selectedMenu: null,
         };
     },
     created() {
@@ -65,85 +78,33 @@ export default {
                     menuIdx: 1,
                     name: '아메리카노',
                     description: '신선한 원두로 만든 아메리카노입니다.',
+                    price: 4000,
                     tags: ['HOT', 'BEST'],
                     image: '/images/coffee1.jpg',
                     category: '커피',
-                    price : 3000,
-                },
-                {
-                    menuIdx: 2,
-                    name: '카페 라떼',
-                    description: '부드러운 우유와 함께하는 카페 라떼입니다.',
-                    tags: ['ICE'],
-                    image: '/images/coffee2.jpg',
-                    category: '커피',
-                    price : 3000,
-                },
-                {
-                    menuIdx: 3,
-                    name: '카페 라떼',
-                    description: '부드러운 우유와 함께하는 카페 라떼입니다.',
-                    tags: ['ICE'],
-                    image: '/images/coffee2.jpg',
-                    category: '커피',
-                    price : 5000,
-                },
-                {
-                    menuIdx: 4,
-                    name: '카페 라떼',
-                    description: '부드러운 우유와 함께하는 카페 라떼입니다.',
-                    tags: ['ICE'],
-                    image: '/images/coffee2.jpg',
-                    category: '커피',
-                    price : 5000,
-                },
-                {
-                    menuIdx: 5,
-                    name: '녹차',
-                    description: '향긋한 녹차 한 잔으로 힐링하세요.',
-                    tags: [],
-                    image: '',
-                    category: '차',
-                    price : 5000,
-                },
-                {
-                    menuIdx: 6,
-                    name: '녹차',
-                    description: '향긋한 녹차 한 잔으로 힐링하세요.',
-                    tags: [],
-                    image: '',
-                    category: '차',
-                    price : 6000,
-                },
-                {
-                    menuIdx: 7,
-                    name: '녹차',
-                    description: '향긋한 녹차 한 잔으로 힐링하세요.',
-                    tags: [],
-                    image: '',
-                    category: '차',
-                    price : 5000,
-                },
-                {
-                    menuIdx: 8,
-                    name: '녹차',
-                    description: '향긋한 녹차 한 잔으로 힐링하세요.',
-                    tags: [],
-                    image: '',
-                    category: '차',
-                    price : 5000,
-                },
-                {
-                    menuIdx: 9,
-                    name: '녹차',
-                    description: '향긋한 녹차 한 잔으로 힐링하세요.',
-                    tags: [],
-                    image: '',
-                    category: '차',
-                    price : 5000,
+                    options: [
+                        {
+                            name: '사이즈',
+                            required: true, // 필수 옵션
+                            items: [
+                            { label: 'Small', value: 'small', price: 0 },
+                            { label: 'Medium', value: 'medium', price: 500 },
+                            { label: 'Large', value: 'large', price: 1000 },
+                            ],
+                        },
+                        {
+                            name: '샷 추가',
+                            items: [
+                            { label: '연하게(1삿)', value: 'shot1', price: 0 },
+                            { label: '추가 안함(기본 2샷)', value: 'shot2', price: 0 },
+                            { label: '샷 1개 추가(3샷)', value: 'shot3', price: 500 },
+                            { label: '샷 2개 추가(4샷)', value: 'shot4', price: 1000 },
+                            ],
+                        },
+                    ],
                 },
             ];
-        },
+        },  
         filteredMenusByCategory(category) {
             return this.menus.filter((menu) => menu.category === category);
         },
@@ -159,8 +120,22 @@ export default {
         },
         ...mapActions(['addToCart']),
         addToCartItem(menu) {
-            this.addToCart(menu);
+            this.selectedMenu = menu;
+            this.isModalVisible = true;
+        },
+        addToCartWithOptions({ menu, options, quantity }) {
+            const menuItemWithOptions = {
+                ...menu,
+                options,
+                quantity,
+                optionsData: menu.options,
+            };
+            this.addToCart(menuItemWithOptions);
             alert(`${menu.name}이(가) 장바구니에 담겼습니다.`);
+        },
+        closeModal() {
+            this.isModalVisible = false;
+            this.selectedMenu = null;
         },
     },
 };

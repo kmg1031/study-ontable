@@ -52,11 +52,15 @@ router.get('/menus/:itemIdx', (req, res) => {
 router.post('/order/store', (req, res) => {
     const { storeIdx, tableIdx, menuList } = req.body;
 
-    // TODO: 주문 처리 로직 추가
-    console.log('주문 데이터:', { storeIdx, tableIdx, menuList });
-
-    // 주문이 성공적으로 처리되었다고 가정
-    res.json({ success: true, message: '주문이 완료되었습니다.' });
+    // 주문 총액 계산
+    const totalAmount = menuList.reduce((total, item) => total + item.totalPrice * item.quantity, 0);
+  
+    // 주문 데이터 로깅
+    console.log('주문 데이터:', { storeIdx, tableIdx, menuList, totalAmount });
+  
+    // TODO: 주문 처리 로직 추가 (총액 검증 및 저장)
+  
+    res.json({ success: true, message: '주문이 완료되었습니다.', totalAmount });
 });
 
 module.exports = router;
