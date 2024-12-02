@@ -8,7 +8,6 @@
 						<th>메뉴명</th>
 						<th>수량</th>
 						<th>가격</th>
-						<th>합계</th>
 						<th>삭제</th>
 					</tr>
 				</thead>
@@ -32,6 +31,9 @@
 							/>
 						</td>
 						<td>₩{{ calculateItemTotalPrice(item).toLocaleString() }}</td>
+						<td>
+							<button @click="removeItem(item.key)">삭제</button>
+						</td>
 					</tr>
 				</tbody>
 			</table>
@@ -100,6 +102,9 @@
 					item.quantity = 1;
 				}
 				this.updateCartItemQuantity({ key: item.key, quantity: item.quantity });
+			},
+			removeItem(key) {
+				this.removeFromCart(key);
 			},
 			calculateItemTotalPrice(item) {
 				let totalPrice = item.price || 0;

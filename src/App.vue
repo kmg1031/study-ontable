@@ -1,9 +1,13 @@
 <template>
-	<div>
+	<div id="wrap">
 		<header>
 			<nav>
-				<router-link :to="{ name: 'HomePage' }">홈</router-link>
-				<router-link :to="{ name: 'CartPage' }">장바구니({{ cartItemCount }})</router-link>
+				<div class="nav-l">
+					<router-link :to="{ name: 'HomePage' }">홈</router-link>
+				</div>
+				<div class="nav-r">
+					<router-link :to="{ name: 'CartPage' }">장바구니({{ cartItemCount }})</router-link>
+				</div>
 			</nav>
 		</header>
 		<router-view></router-view>
@@ -36,6 +40,12 @@ export default {
 
 	nav {
 		display: flex;
+	}
+	nav .nav-l {
+		flex: 1;
+	}
+	nav .nav-r {
+		text-align: right;
 	}
 
 	nav a {

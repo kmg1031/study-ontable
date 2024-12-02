@@ -20,8 +20,8 @@ export default createStore({
         });
       }
     },
-    REMOVE_FROM_CART(state, menuIdx) {
-      state.cart = state.cart.filter(item => item.menuIdx !== menuIdx);
+    REMOVE_FROM_CART(state, key) {
+      state.cart = state.cart.filter(item => item.key !== key);
     },
     CLEAR_CART(state) {
       state.cart = [];
@@ -37,8 +37,8 @@ export default createStore({
     addToCart({ commit }, menuItem) {
       commit('ADD_TO_CART', menuItem);
     },
-    removeFromCart({ commit }, menuIdx) {
-      commit('REMOVE_FROM_CART', menuIdx);
+    removeFromCart({ commit }, key) {
+      commit('REMOVE_FROM_CART', key);
     },
     clearCart({ commit }) {
       commit('CLEAR_CART');

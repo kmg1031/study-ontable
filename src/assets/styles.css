@@ -3,3 +3,48 @@ body {
     margin: 0;
     padding: 0;
 }
+
+body {
+    font-size: 16px; /* 필요에 따라 조정 */
+}
+
+#wrap {
+    max-width: 600px; /* 적절한 최대 너비 설정 */
+    margin: 0 auto;
+    padding: 0 15px;
+  }
+
+/* 모든 화면에서 적용되는 스타일 */
+body {
+    font-family: Arial, sans-serif;
+}
+  
+/* 여기에 모바일 전용 스타일을 작성합니다 */
+.menu-item {
+    flex-direction: column;
+}
+
+.btn-add-to-cart {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.menu-info h3 {
+    font-size: 18px;
+}
+
+.btn-add-to-cart {
+    font-size: 16px;
+}
+.btn-add-to-cart {
+    padding: 15px;
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+.btn-add-to-cart {
+    padding: 10px 15px;
+    font-size: 16px; /* 필요에 따라 조정 */
+    width: auto; /* 버튼 너비 조정 */
+  }
+  

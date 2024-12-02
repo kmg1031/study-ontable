@@ -1,8 +1,7 @@
 <template>
     <div>
         <header>
-            <h1>매장 이름</h1>
-            <p>환영합니다! 원하는 메뉴를 선택해주세요.</p>
+            <h5>매장 이름</h5>
         </header>
 
         <main>
