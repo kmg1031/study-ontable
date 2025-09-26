@@ -32,23 +32,20 @@
   </Card>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import Card from '@/components/ui/Card.vue'
 import Badge from '@/components/ui/Badge.vue'
-import type { MenuCardProps } from '@/types'
 
-const props = defineProps<MenuCardProps>()
+const props = defineProps(['menuItem'])
 
-const emit = defineEmits<{
-  click: [item: typeof props.menuItem]
-}>()
+const emit = defineEmits(['click'])
 
 const handleClick = () => {
   emit('click', props.menuItem)
 }
 
-const handleImageError = (event: Event) => {
-  const target = event.target as HTMLImageElement
+const handleImageError = (event) => {
+  const target = event.target
   target.src = 'https://via.placeholder.com/96x96?text=이미지'
 }
 </script>

@@ -79,6 +79,16 @@
           </div>
       </Card>
 
+      <!-- 토스페이먼츠 결제 위젯 (카드 결제 선택 시에만 표시) -->
+      <Card v-if="paymentMethod === 'card'" title="카드 결제" padding="md">
+        <div class="space-y-4">
+          <!-- 결제 위젯이 렌더링될 영역 -->
+          <div id="payment-method" class="min-h-[200px]"></div>
+          <!-- 이용약관이 렌더링될 영역 -->
+          <div id="agreement"></div>
+        </div>
+      </Card>
+
       <!-- Price Summary -->
       <Card padding="md">
           <div class="space-y-2">
@@ -121,10 +131,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, MapPin, Clock, CreditCard, Smartphone, Banknote } from 'lucide-vue-next'
-import { useCartStore } from '@/stores/cart'
+import { useCartStore } from '@/stores/cart.js'
+import { useTossPayment } from '@/composables/useTossPayment.js'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Card from '@/components/ui/Card.vue'
@@ -132,8 +143,21 @@ import Card from '@/components/ui/Card.vue'
 const router = useRouter()
 const cartStore = useCartStore()
 
+// 토스페이먼츠 Composable 사용
+const {
+  isReady,
+  error,
+  initializePayment,
+  setAmount,
+  renderPaymentMethods,
+  renderAgreement,
+  requestPayment,
+  generateOrderName
+} = useTossPayment()
+
 const paymentMethod = ref('card')
 const isOrdering = ref(false)
+const paymentWidgetRendered = ref(false)
 
 const paymentMethods = [
   { id: 'card', name: '신용카드', icon: CreditCard },
@@ -154,14 +178,82 @@ const getItemExtrasText = (item) => {
   return item.selectedExtras.join(', ')
 }
 
+// 토스페이먼츠 위젯 초기화 및 렌더링
+const initializePaymentWidget = async () => {
+  if (paymentMethod.value !== 'card' || paymentWidgetRendered.value) {
+    return
+  }
+
+  try {
+    // 토스페이먼츠 초기화
+    await initializePayment()
+
+    // 결제 금액 설정
+    await setAmount(cartStore.totalPrice)
+
+    // DOM이 렌더링될 때까지 대기
+    await nextTick()
+
+    // 결제 위젯 렌더링
+    await renderPaymentMethods('#payment-method')
+    await renderAgreement('#agreement')
+
+    paymentWidgetRendered.value = true
+    console.log('토스페이먼츠 위젯 렌더링 완료')
+  } catch (err) {
+    console.error('토스페이먼츠 위젯 초기화 실패:', err)
+  }
+}
+
+// 결제 방법 변경 시 위젯 처리
+watch(paymentMethod, async (newMethod) => {
+  if (newMethod === 'card') {
+    paymentWidgetRendered.value = false
+    await nextTick()
+    await initializePaymentWidget()
+  } else {
+    paymentWidgetRendered.value = false
+  }
+})
+
 const handleOrder = async () => {
   isOrdering.value = true
 
-  // 주문 처리 시뮬레이션
-  await new Promise(resolve => setTimeout(resolve, 2000))
+  try {
+    if (paymentMethod.value === 'card') {
+      // 토스페이먼츠 카드 결제
+      const orderName = generateOrderName(cartStore.items)
 
-  isOrdering.value = false
-  cartStore.clearCart()
-  router.push('/menu')
+      await requestPayment({
+        orderName,
+        amount: cartStore.totalPrice,
+        customerName: '고객',
+        customerEmail: 'customer@example.com',
+        customerMobilePhone: '01012345678'
+      })
+
+      // 결제 요청 후에는 토스페이먼츠에서 리다이렉트 처리
+      // 성공/실패 페이지에서 실제 주문 처리 완료
+    } else {
+      // 기존 방식 (모바일페이, 현금)
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+      isOrdering.value = false
+      cartStore.clearCart()
+      router.push('/menu')
+    }
+  } catch (err) {
+    console.error('결제 처리 실패:', err)
+    isOrdering.value = false
+    // 에러 처리 (토스트 메시지 등)
+    alert('결제 처리 중 오류가 발생했습니다. 다시 시도해주세요.')
+  }
 }
+
+// 컴포넌트 마운트 시 초기화
+onMounted(async () => {
+  if (paymentMethod.value === 'card') {
+    await initializePaymentWidget()
+  }
+})
 </script>

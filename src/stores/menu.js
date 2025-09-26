@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
-import type { MenuItem } from '@/types'
 
 export const useMenuStore = defineStore('menu', {
-  state: (): { menuItems: MenuItem[] } => ({
+  state: () => ({
     menuItems: [
       {
         id: '1',
@@ -85,15 +84,15 @@ export const useMenuStore = defineStore('menu', {
   }),
 
   getters: {
-    getMenuItemById: (state) => (id: string): MenuItem | undefined => {
+    getMenuItemById: (state) => (id) => {
       return state.menuItems.find(item => item.id === id)
     },
 
-    getCategories: (state): string[] => {
+    getCategories: (state) => {
       return ['전체', ...new Set(state.menuItems.map(item => item.category))]
     },
 
-    getMenuItemsByCategory: (state) => (category: string): MenuItem[] => {
+    getMenuItemsByCategory: (state) => (category) => {
       if (category === '전체') return state.menuItems
       return state.menuItems.filter(item => item.category === category)
     }

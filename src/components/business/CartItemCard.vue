@@ -47,23 +47,19 @@
   </Card>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { Trash2 } from 'lucide-vue-next'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
 import QuantityControl from '@/components/ui/QuantityControl.vue'
-import type { CartItemProps } from '@/types'
 
 const TrashIcon = Trash2
 
-const props = defineProps<CartItemProps>()
+const props = defineProps(['cartItem'])
 
-const emit = defineEmits<{
-  quantityChange: [id: string, quantity: number]
-  remove: [id: string]
-}>()
+const emit = defineEmits(['quantityChange', 'remove'])
 
-const getItemDisplayName = (item: typeof props.cartItem) => {
+const getItemDisplayName = (item) => {
   let name = item.menuItem.name
   if (item.selectedSize) {
     name += ` (${item.selectedSize})`
@@ -71,12 +67,12 @@ const getItemDisplayName = (item: typeof props.cartItem) => {
   return name
 }
 
-const getItemExtrasText = (item: typeof props.cartItem) => {
+const getItemExtrasText = (item) => {
   if (!item.selectedExtras || item.selectedExtras.length === 0) return ''
   return item.selectedExtras.join(', ')
 }
 
-const handleQuantityChange = (quantity: number) => {
+const handleQuantityChange = (quantity) => {
   emit('quantityChange', props.cartItem.id, quantity)
 }
 
@@ -84,8 +80,8 @@ const handleRemove = () => {
   emit('remove', props.cartItem.id)
 }
 
-const handleImageError = (event: Event) => {
-  const target = event.target as HTMLImageElement
+const handleImageError = (event) => {
+  const target = event.target
   target.src = 'https://via.placeholder.com/64x64?text=이미지'
 }
 </script>

@@ -19,10 +19,9 @@
   </button>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 import { Loader2 } from 'lucide-vue-next'
-import type { ButtonProps } from '@/types'
 
 const LoaderIcon = Loader2
 
@@ -30,12 +29,28 @@ defineOptions({
   inheritAttrs: false
 })
 
-const props = withDefaults(defineProps<ButtonProps>(), {
-  variant: 'default',
-  size: 'md',
-  disabled: false,
-  loading: false,
-  fullWidth: false
+const props = defineProps({
+  variant: {
+    type: String,
+    default: 'default'
+  },
+  size: {
+    type: String,
+    default: 'md'
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  },
+  fullWidth: {
+    type: Boolean,
+    default: false
+  },
+  icon: Object
 })
 
 const buttonClasses = computed(() => {

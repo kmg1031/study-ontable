@@ -1,53 +1,47 @@
 import { defineStore } from 'pinia'
-import type { CartItem } from '@/types'
-
-interface CartState {
-  items: CartItem[]
-  tableNumber: number
-}
 
 export const useCartStore = defineStore('cart', {
-  state: (): CartState => ({
+  state: () => ({
     items: [],
     tableNumber: 7
   }),
 
   getters: {
-    itemCount: (state): number => state.items.length,
+    itemCount: (state) => state.items.length,
 
-    totalPrice: (state): number => {
+    totalPrice: (state) => {
       return state.items.reduce((total, item) => total + item.totalPrice, 0)
     },
 
-    getItemById: (state) => (id: string): CartItem | undefined => {
+    getItemById: (state) => (id) => {
       return state.items.find(item => item.id === id)
     }
   },
 
   actions: {
-    addItem(cartItem: Omit<CartItem, 'id'>): void {
+    addItem(cartItem) {
       this.items.push({
         ...cartItem,
         id: Date.now().toString()
       })
     },
 
-    updateItem(id: string, updates: Partial<CartItem>): void {
+    updateItem(id, updates) {
       const index = this.items.findIndex(item => item.id === id)
       if (index !== -1) {
         this.items[index] = { ...this.items[index], ...updates }
       }
     },
 
-    removeItem(id: string): void {
+    removeItem(id) {
       this.items = this.items.filter(item => item.id !== id)
     },
 
-    clearCart(): void {
+    clearCart() {
       this.items = []
     },
 
-    updateQuantity(id: string, newQuantity: number): void {
+    updateQuantity(id, newQuantity) {
       if (newQuantity <= 0) {
         this.removeItem(id)
         return

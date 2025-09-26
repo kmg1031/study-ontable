@@ -61,7 +61,7 @@
 
 <script setup>
 import { ArrowLeft } from 'lucide-vue-next'
-import { useCartStore } from '@/stores/cart'
+import { useCartStore } from '@/stores/cart.js'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 import CartItemCard from '@/components/business/CartItemCard.vue'

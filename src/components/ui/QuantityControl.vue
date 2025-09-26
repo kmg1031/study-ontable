@@ -18,22 +18,29 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { Minus, Plus } from 'lucide-vue-next'
 import Button from './Button.vue'
-import type { QuantityControlProps } from '@/types'
 
 const MinusIcon = Minus
 const PlusIcon = Plus
 
-const props = withDefaults(defineProps<QuantityControlProps>(), {
-  min: 1,
-  disabled: false
+const props = defineProps({
+  quantity: {
+    type: Number,
+    required: true
+  },
+  min: {
+    type: Number,
+    default: 1
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  }
 })
 
-const emit = defineEmits<{
-  quantityChange: [quantity: number]
-}>()
+const emit = defineEmits(['quantityChange'])
 
 const decreaseQuantity = () => {
   const newQuantity = Math.max(props.min || 1, props.quantity - 1)

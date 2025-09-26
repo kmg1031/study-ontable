@@ -46,18 +46,22 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
-import type { CardProps } from '@/types'
 
-const props = withDefaults(defineProps<CardProps>(), {
-  padding: 'md',
-  clickable: false
+const props = defineProps({
+  title: String,
+  padding: {
+    type: String,
+    default: 'md'
+  },
+  clickable: {
+    type: Boolean,
+    default: false
+  }
 })
 
-const emit = defineEmits<{
-  click: [event: MouseEvent]
-}>()
+const emit = defineEmits(['click'])
 
 const cardClasses = computed(() => {
   const baseClasses = [
@@ -122,7 +126,7 @@ const footerClasses = computed(() => {
   return paddingClasses[props.padding]
 })
 
-const handleClick = (event: MouseEvent) => {
+const handleClick = (event) => {
   if (props.clickable) {
     emit('click', event)
   }
