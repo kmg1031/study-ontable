@@ -2,8 +2,13 @@ const express = require('express')
 const got = require('got')
 const router = express.Router()
 
-// 환경변수 또는 기본값 사용
-const secretKey = process.env.TOSSPAYMENT_SECRET_KEY || 'test_sk_LlDJaYngrozdyJq15RLnVezGdRpX'
+// 환경변수에서 시크릿 키 가져오기
+const secretKey = process.env.TOSSPAYMENT_SECRET_KEY
+
+if (!secretKey) {
+  console.error('TOSSPAYMENT_SECRET_KEY 환경변수가 설정되지 않았습니다.')
+  process.exit(1)
+}
 
 /**
  * 결제 승인 API
