@@ -16,5 +16,6 @@ module.exports = {
   // 웹팩 설정을 통해 Express 서버와의 충돌 방지
   configureWebpack: {
     devtool: 'source-map',
+    entry: './src/main.ts',
   },
 };
