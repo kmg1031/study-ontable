@@ -21,31 +21,33 @@
       </div>
 
       <div class="w-24 h-24 flex-shrink-0">
-        <img
+        <SafeImage
           :src="menuItem.image"
           :alt="menuItem.name"
-          class="w-full h-full object-cover rounded-r-lg"
-          @error="handleImageError"
+          width="96"
+          height="96"
+          object-fit="cover"
+          rounded
+          fallback-src="https://via.placeholder.com/96x96?text=메뉴"
         />
       </div>
     </div>
   </Card>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import Card from '@/components/ui/Card.vue'
 import Badge from '@/components/ui/Badge.vue'
+import SafeImage from '@/components/ui/SafeImage.vue'
+import type { MenuCardProps, MenuItem } from '@/types'
 
-const props = defineProps(['menuItem'])
+const props = defineProps<MenuCardProps>()
 
-const emit = defineEmits(['click'])
+const emit = defineEmits<{
+  click: [menuItem: MenuItem]
+}>()
 
-const handleClick = () => {
+const handleClick = (): void => {
   emit('click', props.menuItem)
-}
-
-const handleImageError = (event) => {
-  const target = event.target
-  target.src = 'https://via.placeholder.com/96x96?text=이미지'
 }
 </script>

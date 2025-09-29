@@ -84,7 +84,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { CheckCircle, Clock } from 'lucide-vue-next'
-import { useCartStore } from '@/stores/cart.js'
+import { useCartStore } from '@/stores/cart'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 

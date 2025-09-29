@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
+import type { RouteRecordRaw } from 'vue-router'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import './styles/globals.css'
@@ -11,7 +12,7 @@ import OrderView from './views/OrderView.vue'
 import PaymentSuccessView from './views/PaymentSuccessView.vue'
 import PaymentFailView from './views/PaymentFailView.vue'
 
-const routes = [
+const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/menu' },
   { path: '/menu', name: 'menu', component: MenuView },
   { path: '/option/:id', name: 'option', component: OptionView, props: true },

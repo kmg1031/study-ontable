@@ -22,7 +22,10 @@
               :src="menuItem.image"
               :alt="menuItem.name"
               class="w-full h-full object-cover"
-              @error="$event.target.src = 'https://via.placeholder.com/80x80?text=이미지'"
+              @error="(event: Event) => {
+                const target = event.target as HTMLImageElement
+                target.src = 'https://via.placeholder.com/80x80?text=이미지'
+              }"
             />
           </div>
           <div class="flex-1">
@@ -77,7 +80,7 @@
       <Card v-if="menuItem.options?.extras" title="추가 옵션" padding="md">
           <div class="space-y-3">
             <div
-              v-for="extra in menuItem.options.extras"
+              v-for="extra in menuItem.options?.extras"
               :key="extra.name"
               class="flex items-center justify-between"
             >
@@ -129,12 +132,13 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft } from 'lucide-vue-next'
-import { useMenuStore } from '@/stores/menu.js'
-import { useCartStore } from '@/stores/cart.js'
+import { useMenuStore } from '@/stores/menu'
+import { useCartStore } from '@/stores/cart'
+import type { MenuItem, CartItem } from '@/types'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Card from '@/components/ui/Card.vue'
@@ -145,41 +149,42 @@ const router = useRouter()
 const menuStore = useMenuStore()
 const cartStore = useCartStore()
 
-const selectedSize = ref('')
-const selectedExtras = ref([])
-const quantity = ref(1)
+const selectedSize = ref<string>('')
+const selectedExtras = ref<string[]>([])
+const quantity = ref<number>(1)
 
-const menuItem = computed(() => {
-  return menuStore.getMenuItemById(route.params.id)
+const menuItem = computed((): MenuItem | undefined => {
+  const id = typeof route.params.id === 'string' ? route.params.id : route.params.id?.[0]
+  return id ? menuStore.getMenuItemById(id) : undefined
 })
 
-const sizePrice = computed(() => {
+const sizePrice = computed((): number => {
   if (!menuItem.value?.options?.sizes || !selectedSize.value) return 0
   const size = menuItem.value.options.sizes.find(s => s.name === selectedSize.value)
   return size?.price || 0
 })
 
-const extrasPrice = computed(() => {
+const extrasPrice = computed((): number => {
   if (!menuItem.value?.options?.extras) return 0
   return selectedExtras.value.reduce((total, extraName) => {
-    const extra = menuItem.value.options?.extras?.find(e => e.name === extraName)
+    const extra = menuItem.value?.options?.extras?.find(e => e.name === extraName)
     return total + (extra?.price || 0)
   }, 0)
 })
 
-const totalPrice = computed(() => {
+const totalPrice = computed((): number => {
   if (!menuItem.value) return 0
   return (menuItem.value.price + sizePrice.value + extrasPrice.value) * quantity.value
 })
 
-const handleQuantityChange = (newQuantity) => {
+const handleQuantityChange = (newQuantity: number): void => {
   quantity.value = newQuantity
 }
 
-const handleConfirm = () => {
+const handleConfirm = (): void => {
   if (!menuItem.value) return
 
-  const cartItem = {
+  const cartItem: Omit<CartItem, 'id'> = {
     menuItem: menuItem.value,
     quantity: quantity.value,
     selectedSize: selectedSize.value || undefined,
@@ -192,7 +197,7 @@ const handleConfirm = () => {
 }
 
 onMounted(() => {
-  if (menuItem.value?.options?.sizes) {
+  if (menuItem.value?.options?.sizes && menuItem.value.options.sizes.length > 0) {
     selectedSize.value = menuItem.value.options.sizes[0].name
   }
 })

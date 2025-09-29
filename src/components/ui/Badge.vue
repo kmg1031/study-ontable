@@ -4,18 +4,13 @@
   </span>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
+import type { BadgeProps } from '@/types'
 
-const props = defineProps({
-  variant: {
-    type: String,
-    default: 'default'
-  },
-  size: {
-    type: String,
-    default: 'md'
-  }
+const props = withDefaults(defineProps<BadgeProps>(), {
+  variant: 'default',
+  size: 'md'
 })
 
 const badgeClasses = computed(() => {

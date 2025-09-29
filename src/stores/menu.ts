@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia'
+import type { MenuItem, MenuState } from '@/types'
+import { menuApiService } from '@/services/menuApi'
+import { globalErrorHandler } from '@/composables/useErrorHandler'
 
 export const useMenuStore = defineStore('menu', {
-  state: () => ({
+  state: (): MenuState => ({
+    isLoading: false,
+    error: null,
     menuItems: [
       {
         id: '1',
@@ -84,17 +89,89 @@ export const useMenuStore = defineStore('menu', {
   }),
 
   getters: {
-    getMenuItemById: (state) => (id) => {
-      return state.menuItems.find(item => item.id === id)
+    getMenuItemById: (state): ((id: string) => MenuItem | undefined) => {
+      return (id: string) => state.menuItems.find(item => item.id === id)
     },
 
-    getCategories: (state) => {
+    getCategories: (state): string[] => {
       return ['전체', ...new Set(state.menuItems.map(item => item.category))]
     },
 
-    getMenuItemsByCategory: (state) => (category) => {
-      if (category === '전체') return state.menuItems
-      return state.menuItems.filter(item => item.category === category)
+    getMenuItemsByCategory: (state): ((category: string) => MenuItem[]) => {
+      return (category: string) => {
+        if (category === '전체') return state.menuItems
+        return state.menuItems.filter(item => item.category === category)
+      }
+    }
+  },
+
+  actions: {
+    async fetchMenuItems(): Promise<void> {
+      const { withErrorHandling } = globalErrorHandler
+
+      const result = await withErrorHandling(
+        async () => {
+          const response = await menuApiService.getList()
+
+          if (response.success && 'data' in response) {
+            this.menuItems = response.data
+          } else {
+            throw new Error('메뉴 데이터를 불러올 수 없습니다.')
+          }
+
+          return true
+        },
+        '메뉴 데이터 로드',
+        () => this.fetchMenuItems()
+      )
+
+      if (!result) {
+        this.error = '메뉴를 불러오는 중 오류가 발생했습니다.'
+      }
+    },
+
+    async fetchMenuByCategory(category: string): Promise<void> {
+      const { withErrorHandling } = globalErrorHandler
+
+      await withErrorHandling(
+        async () => {
+          const response = await menuApiService.getByCategory(category)
+
+          if (response.success) {
+            this.menuItems = response.data
+          } else {
+            throw new Error('카테고리 메뉴를 불러올 수 없습니다.')
+          }
+
+          return true
+        },
+        `${category} 메뉴 조회`,
+        () => this.fetchMenuByCategory(category)
+      )
+    },
+
+    async searchMenuItems(searchTerm: string): Promise<void> {
+      const { withErrorHandling } = globalErrorHandler
+
+      await withErrorHandling(
+        async () => {
+          const response = await menuApiService.getList({ search: searchTerm })
+
+          if (response.success && 'data' in response) {
+            this.menuItems = response.data
+          } else {
+            throw new Error('메뉴 검색에 실패했습니다.')
+          }
+
+          return true
+        },
+        '메뉴 검색',
+        () => this.searchMenuItems(searchTerm)
+      )
+    },
+
+    clearError(): void {
+      this.error = null
     }
   }
 })

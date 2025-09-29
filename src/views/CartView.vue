@@ -16,11 +16,22 @@
       </div>
     </div>
 
-    <div v-if="cartStore.itemCount === 0" class="flex flex-col items-center justify-center h-96 text-muted-foreground">
-      <div class="text-6xl mb-4">🛒</div>
-      <p class="text-lg mb-2">장바구니가 비어있습니다</p>
-      <p class="text-sm">메뉴를 선택해주세요</p>
-    </div>
+    <EmptyState
+      v-if="cartStore.itemCount === 0"
+      emoji="🛒"
+      title="장바구니가 비어있습니다"
+      description="메뉴를 선택해주세요"
+      size="lg"
+    >
+      <template #actions>
+        <Button
+          variant="primary"
+          @click="$router.push('/menu')"
+        >
+          메뉴 보러가기
+        </Button>
+      </template>
+    </EmptyState>
 
     <template v-else>
       <div class="p-4 space-y-4">
@@ -59,11 +70,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ArrowLeft } from 'lucide-vue-next'
-import { useCartStore } from '@/stores/cart.js'
+import { useCartStore } from '@/stores/cart'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 import CartItemCard from '@/components/business/CartItemCard.vue'
 
 const cartStore = useCartStore()

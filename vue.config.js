@@ -24,9 +24,9 @@ module.exports = defineConfig({
   // 웹팩 설정을 통해 Express 서버와의 충돌 방지
   configureWebpack: {
     devtool: 'source-map',
-    entry: './src/main.js',
+    entry: './src/main.ts',
     resolve: {
-      extensions: ['.js', '.vue', '.json'],
+      extensions: ['.ts', '.js', '.vue', '.json'],
       alias: {
         '@': require('path').resolve(__dirname, 'src')
       }
@@ -36,8 +36,14 @@ module.exports = defineConfig({
     ]
   },
 
-  // TypeScript 관련 플러그인 비활성화
+  // TypeScript 관련 설정
   chainWebpack: config => {
-    config.plugins.delete('fork-ts-checker')
+    // TypeScript 처리를 위한 설정
+    config.module
+      .rule('ts')
+      .test(/\.ts$/)
+      .use('babel-loader')
+      .loader('babel-loader')
+      .end()
   },
 });

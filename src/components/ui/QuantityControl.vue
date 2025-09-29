@@ -12,35 +12,28 @@
       variant="outline"
       size="sm"
       :icon="PlusIcon"
-      :disabled="disabled || (max && quantity >= max)"
+      :disabled="disabled || (props.max !== undefined && quantity >= props.max)"
       @click="increaseQuantity"
     />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Minus, Plus } from 'lucide-vue-next'
 import Button from './Button.vue'
+import type { QuantityControlProps } from '@/types'
 
 const MinusIcon = Minus
 const PlusIcon = Plus
 
-const props = defineProps({
-  quantity: {
-    type: Number,
-    required: true
-  },
-  min: {
-    type: Number,
-    default: 1
-  },
-  disabled: {
-    type: Boolean,
-    default: false
-  }
+const props = withDefaults(defineProps<QuantityControlProps>(), {
+  min: 1,
+  disabled: false
 })
 
-const emit = defineEmits(['quantityChange'])
+const emit = defineEmits<{
+  quantityChange: [quantity: number]
+}>()
 
 const decreaseQuantity = () => {
   const newQuantity = Math.max(props.min || 1, props.quantity - 1)

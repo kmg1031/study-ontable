@@ -46,12 +46,54 @@
 
     <!-- Menu Items -->
     <div class="p-4 space-y-4">
-      <MenuCard
-        v-for="item in filteredItems"
-        :key="item.id"
-        :menu-item="item"
-        @click="selectMenuItem"
+      <!-- Loading State -->
+      <template v-if="menuStore.isLoading">
+        <SkeletonCard
+          v-for="i in 6"
+          :key="i"
+          padding="sm"
+          :show-image="true"
+          :show-content="true"
+          :show-footer="true"
+        />
+      </template>
+
+      <!-- Error State -->
+      <ErrorMessage
+        v-else-if="menuStore.error"
+        :message="menuStore.error"
+        type="error"
+        show-retry
+        @retry="handleRetryLoadMenu"
       />
+
+      <!-- Menu Items -->
+      <template v-else-if="filteredItems.length > 0">
+        <MenuCard
+          v-for="item in filteredItems"
+          :key="item.id"
+          :menu-item="item"
+          @click="selectMenuItem"
+        />
+      </template>
+
+      <!-- Empty State -->
+      <EmptyState
+        v-else
+        emoji="🍽️"
+        title="메뉴가 없습니다"
+        description="선택한 카테고리에 메뉴가 없습니다"
+        size="md"
+      >
+        <template #actions>
+          <Button
+            variant="outline"
+            @click="handleRetryLoadMenu"
+          >
+            새로고침
+          </Button>
+        </template>
+      </EmptyState>
     </div>
 
     <!-- Bottom Spacing -->
@@ -59,19 +101,25 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { MapPin, ShoppingCart } from 'lucide-vue-next'
-import { useMenuStore } from '@/stores/menu.js'
-import { useCartStore } from '@/stores/cart.js'
+import { useMenuStore } from '@/stores/menu'
+import { useCartStore } from '@/stores/cart'
+import { globalErrorHandler } from '@/composables/useErrorHandler'
+import type { MenuItem } from '@/types'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
+import SkeletonCard from '@/components/ui/SkeletonCard.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import ErrorMessage from '@/components/ui/ErrorMessage.vue'
 import MenuCard from '@/components/business/MenuCard.vue'
 
 const router = useRouter()
 const menuStore = useMenuStore()
 const cartStore = useCartStore()
+const { withErrorHandling, showSuccess } = globalErrorHandler
 
 const selectedCategory = ref('전체')
 
@@ -79,7 +127,22 @@ const filteredItems = computed(() => {
   return menuStore.getMenuItemsByCategory(selectedCategory.value)
 })
 
-const selectMenuItem = (item) => {
+const selectMenuItem = (item: MenuItem): void => {
   router.push(`/option/${item.id}`)
 }
+
+const handleRetryLoadMenu = async (): Promise<void> => {
+  await withErrorHandling(
+    () => menuStore.fetchMenuItems(),
+    '메뉴 로드'
+  )
+}
+
+// 컴포넌트 마운트 시 메뉴 로드 시뮬레이션
+onMounted(async () => {
+  // 개발 중에는 시뮬레이션으로 메뉴 로딩 상태를 보여줌
+  if (process.env.NODE_ENV === 'development') {
+    await handleRetryLoadMenu()
+  }
+})
 </script>

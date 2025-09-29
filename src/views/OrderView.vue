@@ -56,36 +56,38 @@
           </div>
       </Card>
 
-      <!-- Payment Method -->
-      <Card title="결제 방법" padding="md">
-          <div class="space-y-2">
-            <div
-              v-for="method in paymentMethods"
-              :key="method.id"
-              class="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent/50"
-            >
-              <input
-                :id="method.id"
-                v-model="paymentMethod"
-                :value="method.id"
-                type="radio"
-                class="aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-              <component :is="method.icon" class="w-5 h-5 text-muted-foreground" />
-              <label :for="method.id" class="flex-1 cursor-pointer text-sm font-medium leading-none">
-                {{ method.name }}
-              </label>
+      <!-- 토스페이먼츠 결제 위젯 -->
+      <Card title="카드 결제" padding="md">
+        <div class="space-y-4">
+          <!-- 로딩 상태 -->
+          <div v-if="!isReady && !error" class="min-h-[200px] flex items-center justify-center">
+            <div class="text-center space-y-3">
+              <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+              <p class="text-sm text-muted-foreground">결제 위젯을 로드하는 중...</p>
             </div>
           </div>
-      </Card>
 
-      <!-- 토스페이먼츠 결제 위젯 (카드 결제 선택 시에만 표시) -->
-      <Card v-if="paymentMethod === 'card'" title="카드 결제" padding="md">
-        <div class="space-y-4">
+          <!-- 에러 상태 -->
+          <div v-else-if="error" class="p-4 bg-red-50 rounded-lg text-red-600">
+            <div class="flex items-center gap-2 mb-2">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+              <span class="font-medium text-sm">결제 위젯 로드 실패</span>
+            </div>
+            <p class="text-sm">{{ error }}</p>
+            <button
+              @click="retryLoadPayment"
+              class="mt-2 text-sm text-red-600 hover:text-red-700 underline"
+            >
+              다시 시도
+            </button>
+          </div>
+
           <!-- 결제 위젯이 렌더링될 영역 -->
-          <div id="payment-method" class="min-h-[200px]"></div>
+          <div v-show="isReady" id="payment-method" class="min-h-[200px]"></div>
           <!-- 이용약관이 렌더링될 영역 -->
-          <div id="agreement"></div>
+          <div v-show="isReady" id="agreement"></div>
         </div>
       </Card>
 
@@ -117,11 +119,19 @@
         variant="primary"
         size="lg"
         full-width
-        :disabled="isOrdering"
+        :disabled="isOrdering || !isReady"
         :loading="isOrdering"
         @click="handleOrder"
       >
-        {{ isOrdering ? '주문 처리중...' : `${cartStore.totalPrice.toLocaleString()}원 결제하기` }}
+        <template v-if="isOrdering">
+          주문 처리중...
+        </template>
+        <template v-else-if="!isReady">
+          결제 위젯 로드 중...
+        </template>
+        <template v-else>
+          {{ cartStore.totalPrice.toLocaleString() }}원 결제하기
+        </template>
       </Button>
     </div>
 
@@ -130,12 +140,13 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, MapPin, Clock, CreditCard, Smartphone, Banknote } from 'lucide-vue-next'
-import { useCartStore } from '@/stores/cart.js'
-import { useTossPayment } from '@/composables/useTossPayment.js'
+import { ArrowLeft, MapPin, Clock } from 'lucide-vue-next'
+import { useCartStore } from '@/stores/cart'
+import { useTossPayment } from '@/composables/useTossPayment'
+import type { CartItem } from '@/types'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Card from '@/components/ui/Card.vue'
@@ -155,17 +166,10 @@ const {
   generateOrderName
 } = useTossPayment()
 
-const paymentMethod = ref('card')
 const isOrdering = ref(false)
 const paymentWidgetRendered = ref(false)
 
-const paymentMethods = [
-  { id: 'card', name: '신용카드', icon: CreditCard },
-  { id: 'mobile', name: '모바일페이', icon: Smartphone },
-  { id: 'cash', name: '현금', icon: Banknote }
-]
-
-const getItemDisplayName = (item) => {
+const getItemDisplayName = (item: CartItem): string => {
   let name = item.menuItem.name
   if (item.selectedSize) {
     name += ` (${item.selectedSize})`
@@ -173,14 +177,14 @@ const getItemDisplayName = (item) => {
   return name
 }
 
-const getItemExtrasText = (item) => {
+const getItemExtrasText = (item: CartItem): string => {
   if (!item.selectedExtras || item.selectedExtras.length === 0) return ''
   return item.selectedExtras.join(', ')
 }
 
 // 토스페이먼츠 위젯 초기화 및 렌더링
-const initializePaymentWidget = async () => {
-  if (paymentMethod.value !== 'card' || paymentWidgetRendered.value) {
+const initializePaymentWidget = async (): Promise<void> => {
+  if (paymentWidgetRendered.value) {
     return
   }
 
@@ -205,43 +209,30 @@ const initializePaymentWidget = async () => {
   }
 }
 
-// 결제 방법 변경 시 위젯 처리
-watch(paymentMethod, async (newMethod) => {
-  if (newMethod === 'card') {
-    paymentWidgetRendered.value = false
-    await nextTick()
-    await initializePaymentWidget()
-  } else {
-    paymentWidgetRendered.value = false
-  }
-})
+// 재시도 함수
+const retryLoadPayment = async (): Promise<void> => {
+  paymentWidgetRendered.value = false
+  await initializePaymentWidget()
+}
 
-const handleOrder = async () => {
+
+const handleOrder = async (): Promise<void> => {
   isOrdering.value = true
 
   try {
-    if (paymentMethod.value === 'card') {
-      // 토스페이먼츠 카드 결제
-      const orderName = generateOrderName(cartStore.items)
+    // 토스페이먼츠 카드 결제
+    const orderName = generateOrderName(cartStore.items)
 
-      await requestPayment({
-        orderName,
-        amount: cartStore.totalPrice,
-        customerName: '고객',
-        customerEmail: 'customer@example.com',
-        customerMobilePhone: '01012345678'
-      })
+    await requestPayment({
+      orderName,
+      amount: cartStore.totalPrice,
+      customerName: '고객',
+      customerEmail: 'customer@example.com',
+      customerMobilePhone: '01012345678'
+    })
 
-      // 결제 요청 후에는 토스페이먼츠에서 리다이렉트 처리
-      // 성공/실패 페이지에서 실제 주문 처리 완료
-    } else {
-      // 기존 방식 (모바일페이, 현금)
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      isOrdering.value = false
-      cartStore.clearCart()
-      router.push('/menu')
-    }
+    // 결제 요청 후에는 토스페이먼츠에서 리다이렉트 처리
+    // 성공/실패 페이지에서 실제 주문 처리 완료
   } catch (err) {
     console.error('결제 처리 실패:', err)
     isOrdering.value = false
@@ -252,8 +243,13 @@ const handleOrder = async () => {
 
 // 컴포넌트 마운트 시 초기화
 onMounted(async () => {
-  if (paymentMethod.value === 'card') {
-    await initializePaymentWidget()
+  // 장바구니가 비어있으면 메뉴로 이동
+  if (cartStore.items.length === 0) {
+    console.log('장바구니가 비어있어 메뉴로 이동합니다.')
+    router.push('/menu')
+    return
   }
+
+  await initializePaymentWidget()
 })
 </script>
