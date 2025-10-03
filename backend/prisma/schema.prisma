@@ -1,0 +1,141 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Restaurant {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  address       String
+  phone         String
+  email         String
+  businessHours String?  // JSON as string for SQLite
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tables         Table[]
+  menuCategories MenuCategory[]
+  menuItems      MenuItem[]
+  orders         Order[]
+
+  @@map("restaurants")
+}
+
+model Table {
+  id           String   @id @default(cuid())
+  restaurantId String
+  number       Int
+  status       String   @default("AVAILABLE") // AVAILABLE, OCCUPIED, RESERVED, CLEANING
+  capacity     Int
+  qrCode       String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  orders     Order[]
+
+  @@unique([restaurantId, number])
+  @@map("tables")
+}
+
+model MenuCategory {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String
+  description  String?
+  sortOrder    Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  menuItems  MenuItem[]
+
+  @@unique([restaurantId, name])
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id              String   @id @default(cuid())
+  restaurantId    String
+  categoryId      String
+  name            String
+  description     String
+  price           Float    // Using Float instead of Decimal for SQLite
+  imageUrl        String?
+  isAvailable     Boolean  @default(true)
+  prepTimeMinutes Int      @default(10)
+  options         String?  // JSON as string for SQLite
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  restaurant Restaurant    @relation(fields: [restaurantId], references: [id])
+  category   MenuCategory  @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+
+  @@map("menu_items")
+}
+
+model Order {
+  id                 String   @id @default(cuid())
+  orderNumber        String   @unique
+  restaurantId       String
+  tableId            String
+  tableNumber        Int
+  totalAmount        Float    // Using Float instead of Decimal for SQLite
+  status             String   @default("PENDING") // PENDING, CONFIRMED, PREPARING, READY, SERVED, CANCELLED
+  customerInfo       String?  // JSON as string for SQLite
+  estimatedReadyTime DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  restaurant Restaurant  @relation(fields: [restaurantId], references: [id])
+  table      Table       @relation(fields: [tableId], references: [id])
+  items      OrderItem[]
+  payments   Payment[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String   @id @default(cuid())
+  orderId        String
+  menuItemId     String
+  quantity       Int
+  selectedSize   String?
+  selectedExtras String?  // JSON as string for SQLite
+  unitPrice      Float    // Using Float instead of Decimal for SQLite
+  totalPrice     Float    // Using Float instead of Decimal for SQLite
+  createdAt      DateTime @default(now())
+
+  order    Order    @relation(fields: [orderId], references: [id])
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  orderId       String
+  paymentMethod String   // CARD, MOBILE, CASH
+  amount        Float    // Using Float instead of Decimal for SQLite
+  status        String   @default("PENDING") // PENDING, COMPLETED, FAILED, CANCELLED, REFUNDED
+  provider      String
+  transactionId String?
+  metadata      String?  // JSON as string for SQLite
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
