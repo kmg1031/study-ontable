@@ -1,5 +1,5 @@
 const express = require('express')
-const got = require('got')
+const axios = require('axios')
 const router = express.Router()
 
 // 환경변수에서 시크릿 키 가져오기
@@ -46,21 +46,19 @@ router.post('/confirm', async (req, res) => {
     console.log('결제 승인 요청:', { paymentKey, orderId, amount })
 
     // 토스페이먼츠 결제 승인 API 호출
-    const response = await got.post('https://api.tosspayments.com/v1/payments/confirm', {
+    const response = await axios.post('https://api.tosspayments.com/v1/payments/confirm', {
+      orderId: orderId,
+      amount: amount,
+      paymentKey: paymentKey,
+    }, {
       headers: {
         'Authorization': encryptedSecretKey,
         'Content-Type': 'application/json',
-      },
-      json: {
-        orderId: orderId,
-        amount: amount,
-        paymentKey: paymentKey,
-      },
-      responseType: 'json',
+      }
     })
 
     // 성공 응답
-    console.log('결제 승인 성공:', response.body)
+    console.log('결제 승인 성공:', response.data)
 
     // TODO: 여기에 비즈니스 로직 추가
     // - 주문 정보 데이터베이스 저장
@@ -70,7 +68,7 @@ router.post('/confirm', async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: response.body,
+      data: response.data,
       message: '결제가 정상적으로 승인되었습니다.'
     })
 
@@ -78,10 +76,10 @@ router.post('/confirm', async (req, res) => {
     console.error('결제 승인 실패:', error)
 
     // 토스페이먼츠 API 오류 처리
-    if (error.response && error.response.body) {
-      const errorBody = error.response.body
+    if (error.response && error.response.data) {
+      const errorBody = error.response.data
 
-      return res.status(error.response.statusCode || 500).json({
+      return res.status(error.response.status || 500).json({
         success: false,
         error: errorBody.message || '결제 승인에 실패했습니다.',
         code: errorBody.code || 'PAYMENT_CONFIRM_FAILED',
@@ -117,25 +115,24 @@ router.get('/:paymentKey', async (req, res) => {
     const encryptedSecretKey = 'Basic ' + Buffer.from(secretKey + ':').toString('base64')
 
     // 토스페이먼츠 결제 조회 API 호출
-    const response = await got.get(`https://api.tosspayments.com/v1/payments/${paymentKey}`, {
+    const response = await axios.get(`https://api.tosspayments.com/v1/payments/${paymentKey}`, {
       headers: {
         'Authorization': encryptedSecretKey,
-      },
-      responseType: 'json',
+      }
     })
 
     res.status(200).json({
       success: true,
-      data: response.body
+      data: response.data
     })
 
   } catch (error) {
     console.error('결제 정보 조회 실패:', error)
 
-    if (error.response && error.response.body) {
-      const errorBody = error.response.body
+    if (error.response && error.response.data) {
+      const errorBody = error.response.data
 
-      return res.status(error.response.statusCode || 500).json({
+      return res.status(error.response.status || 500).json({
         success: false,
         error: errorBody.message || '결제 정보 조회에 실패했습니다.',
         code: errorBody.code || 'PAYMENT_INQUIRY_FAILED'
@@ -170,18 +167,16 @@ router.post('/:paymentKey/cancel', async (req, res) => {
     const encryptedSecretKey = 'Basic ' + Buffer.from(secretKey + ':').toString('base64')
 
     // 토스페이먼츠 결제 취소 API 호출
-    const response = await got.post(`https://api.tosspayments.com/v1/payments/${paymentKey}/cancel`, {
+    const response = await axios.post(`https://api.tosspayments.com/v1/payments/${paymentKey}/cancel`, {
+      cancelReason: cancelReason || '고객 요청'
+    }, {
       headers: {
         'Authorization': encryptedSecretKey,
         'Content-Type': 'application/json',
-      },
-      json: {
-        cancelReason: cancelReason || '고객 요청'
-      },
-      responseType: 'json',
+      }
     })
 
-    console.log('결제 취소 완료:', response.body)
+    console.log('결제 취소 완료:', response.data)
 
     // TODO: 취소 후 비즈니스 로직
     // - 주문 상태 변경
@@ -190,17 +185,17 @@ router.post('/:paymentKey/cancel', async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: response.body,
+      data: response.data,
       message: '결제가 성공적으로 취소되었습니다.'
     })
 
   } catch (error) {
     console.error('결제 취소 실패:', error)
 
-    if (error.response && error.response.body) {
-      const errorBody = error.response.body
+    if (error.response && error.response.data) {
+      const errorBody = error.response.data
 
-      return res.status(error.response.statusCode || 500).json({
+      return res.status(error.response.status || 500).json({
         success: false,
         error: errorBody.message || '결제 취소에 실패했습니다.',
         code: errorBody.code || 'PAYMENT_CANCEL_FAILED'

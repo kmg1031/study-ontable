@@ -3,6 +3,9 @@ const cors = require('cors')
 const path = require('path')
 require('dotenv').config()
 
+// 데이터베이스 연결
+const db = require('./database/connection')
+
 const app = express()
 const PORT = process.env.PORT || 3000
 
@@ -16,7 +19,14 @@ app.use(express.static(path.join(__dirname, '../dist')))
 
 // API 라우터
 const paymentRouter = require('./payment')
+const menuRouter = require('./routes/menu')
+const ordersRouter = require('./routes/orders')
+const tablesRouter = require('./routes/tables')
+
 app.use('/api/payments', paymentRouter)
+app.use('/api/menu', menuRouter)
+app.use('/api/orders', ordersRouter)
+app.use('/api/tables', tablesRouter)
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -47,11 +57,15 @@ app.use((err, req, res, next) => {
   })
 })
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Study OnTable API Server is running on port ${PORT}`)
   console.log(`📱 Frontend: http://localhost:${PORT}`)
   console.log(`🔌 API Endpoint: http://localhost:${PORT}/api`)
   console.log(`💳 Payment API: http://localhost:${PORT}/api/payments`)
+  console.log('')
+
+  // 데이터베이스 연결 테스트
+  await db.testConnection()
 })
 
 module.exports = app
